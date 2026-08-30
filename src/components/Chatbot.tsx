@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { resumeChunks, systemPrompt } from '../data/chunks';
 import { Send, X, MessageSquare } from 'lucide-react';
 import Fuse from 'fuse.js';
@@ -59,17 +59,13 @@ export default function Chatbot() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Instanciar el modelo una sola vez
-  const openai = React.useMemo(() => {
-    const apiKey = import.meta.env.VITE_NVIDIA_API_KEY;
+  const genAI = React.useMemo(() => {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      console.error('VITE_NVIDIA_API_KEY no está definida en .env');
+      console.error('VITE_GEMINI_API_KEY no está definida en .env');
       return null;
     }
-    return new OpenAI({
-      apiKey,
-      baseURL: 'https://integrate.api.nvidia.com/v1',
-      dangerouslyAllowBrowser: true,
-    });
+    return new GoogleGenerativeAI(apiKey);
   }, []);
 
   useEffect(() => {
@@ -100,7 +96,7 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
-      if (!openai) {
+      if (!genAI) {
         setMessages((prev) => [...prev, { role: 'model', text: 'Error: Cliente de IA no configurado.' }]);
         setIsLoading(false);
         return;
@@ -114,36 +110,30 @@ export default function Chatbot() {
           ? topChunks.join('\n\n')
           : 'No hay información específica. Sugerí contactar a Matías directamente.';
 
-      // Mapear historial de chat al formato de OpenAI
-      const formattedHistory: any[] = messages.slice(-4).map((m) => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.text,
+      // Mapear historial de chat al formato de Gemini
+      const formattedHistory = messages.slice(-4).map((m) => ({
+        role: m.role === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }],
       }));
 
       // Agregar mensaje de sistema con el contexto inyectado
-      const systemMessage = {
-        role: 'system',
-        content: `${systemPrompt}\n\nContexto relevante:\n${contextText}`,
-      };
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        systemInstruction: `${systemPrompt}\n\nContexto relevante:\n${contextText}`,
+      });
 
-      // Streaming con el nuevo SDK
-      const payload: any = {
-        model: 'deepseek-ai/deepseek-v4-pro',
-        messages: [systemMessage, ...formattedHistory, { role: 'user', content: userMessage }],
-        temperature: 0.7,
-        top_p: 0.95,
-        max_tokens: 4000,
-        stream: true,
-        chat_template_kwargs: { thinking: false },
-      };
-      const stream = await openai.chat.completions.create(payload) as any;
+      const chat = model.startChat({
+        history: formattedHistory,
+      });
+
+      const stream = await chat.sendMessageStream(userMessage);
 
       setMessages((prev) => [...prev, { role: 'model', text: '' }]);
       setIsLoading(false);
 
       let fullText = '';
-      for await (const chunk of stream) {
-        const delta = chunk.choices[0]?.delta?.content || '';
+      for await (const chunk of stream.stream) {
+        const delta = chunk.text();
         fullText += delta;
         setMessages((prev) => {
           const updated = [...prev];
