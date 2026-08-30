@@ -1,0 +1,14 @@
+---
+description: Reglas para mantener un diseño limpio usando DaisyUI y TailwindCSS, evitando código inflado de IA.
+globs: ["**/*.{jsx,tsx,vue,svelte,html}"]
+---
+# Reglas de UI con DaisyUI
+
+Esta regla asegura que el código generado para la UI sea limpio, semántico y utilice los componentes de DaisyUI, evitando el código inflado de Tailwind típico de la IA generativa.
+
+## Reglas de Refactorización y Creación:
+1.  **Eliminar "Utility Bloat"**: Reemplaza largas cadenas de clases de Tailwind (como `bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded`) por clases semánticas de DaisyUI (como `btn btn-primary`).
+2.  **Usar Componentes Semánticos**: Utiliza los patrones de UI proporcionados por DaisyUI (Cards, Modals, Navbars, Buttons, Badges, Inputs, Forms, etc.).
+3.  **Variables de Color**: No uses colores harcodeados (`text-gray-500`, `bg-white`, `bg-gray-900`). Utiliza las clases de color semánticas de DaisyUI (`text-base-content`, `text-primary`, `bg-base-100`, `bg-base-200`, etc.) para asegurar el soporte nativo de modo oscuro/claro.
+4.  **Layout (Diseño)**: Mantén las utilidades estándar de grid y flex de Tailwind para el diseño, pero confía en DaisyUI para el estilo de los componentes en sí.
+5.  **Cero Estilos en Línea**: Nunca utilices estilos en línea (`style="..."`) o valores arbitrarios específicos (`w-[312px]`) a menos que sea estrictamente necesario. Prioriza la mantenibilidad y legibilidad.
