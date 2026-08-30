@@ -127,16 +127,16 @@ export default function Chatbot() {
       };
 
       // Streaming con el nuevo SDK
-      const stream = await openai.chat.completions.create({
+      const payload: any = {
         model: 'deepseek-ai/deepseek-v4-pro',
         messages: [systemMessage, ...formattedHistory, { role: 'user', content: userMessage }],
         temperature: 0.7,
         top_p: 0.95,
         max_tokens: 4000,
         stream: true,
-        // @ts-ignore - Este argumento específico lo provee NVIDIA
         chat_template_kwargs: { thinking: false },
-      });
+      };
+      const stream = await openai.chat.completions.create(payload) as any;
 
       setMessages((prev) => [...prev, { role: 'model', text: '' }]);
       setIsLoading(false);
