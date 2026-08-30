@@ -118,7 +118,7 @@ export default function Chatbot() {
 
       // Agregar mensaje de sistema con el contexto inyectado
       const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-flash-latest',
         systemInstruction: `${systemPrompt}\n\nContexto relevante:\n${contextText}`,
       });
 
