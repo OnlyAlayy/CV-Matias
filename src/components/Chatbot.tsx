@@ -11,6 +11,13 @@ const fuse = new Fuse(resumeChunks, {
   threshold: 0.6,
 });
 
+/* ===== Rate Limiting ===== */
+const RATE_LIMIT = {
+  MAX_MESSAGES_PER_SESSION: 15,
+  COOLDOWN_MS: 3000,
+  MAX_INPUT_LENGTH: 300,
+};
+
 /* ===== Simple Markdown Renderer (sin dependencias externas) ===== */
 function renderText(text: string): React.ReactNode[] {
   return text.split('\n').map((line, li) => {
@@ -55,6 +62,8 @@ export default function Chatbot() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
+  const [lastSentAt, setLastSentAt] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -90,10 +99,30 @@ export default function Chatbot() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    const userMessage = input.trim();
+    // --- Rate Limiting Checks ---
+    if (messageCount >= RATE_LIMIT.MAX_MESSAGES_PER_SESSION) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'model', text: 'Alcanzaste el límite de consultas por sesión. Refrescá la página para empezar de nuevo.' },
+      ]);
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastSentAt < RATE_LIMIT.COOLDOWN_MS) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'model', text: 'Esperá unos segundos antes de enviar otro mensaje.' },
+      ]);
+      return;
+    }
+
+    const userMessage = input.trim().slice(0, RATE_LIMIT.MAX_INPUT_LENGTH);
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', text: userMessage }]);
     setIsLoading(true);
+    setMessageCount((c) => c + 1);
+    setLastSentAt(now);
 
     try {
       if (!genAI) {
@@ -111,28 +140,37 @@ export default function Chatbot() {
           : 'No hay información específica. Sugerí contactar a Matías directamente.';
 
       // Mapear historial de chat al formato de Gemini
-      const formattedHistory = messages.slice(-4).map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
+      // Gemini requiere que el primer mensaje del historial sea 'user'
+      const chatHistory = messages.slice(-4);
+      const firstUserIdx = chatHistory.findIndex((m) => m.role === 'user');
+      const validHistory = firstUserIdx >= 0 ? chatHistory.slice(firstUserIdx) : [];
+      const formattedHistory = validHistory.map((m) => ({
+        role: m.role === 'user' ? 'user' as const : 'model' as const,
         parts: [{ text: m.text }],
       }));
 
-      // Agregar mensaje de sistema con el contexto inyectado
+      // Configurar modelo con contexto inyectado
       const model = genAI.getGenerativeModel({
-        model: 'gemini-flash-latest',
+        model: 'gemini-2.5-flash',
         systemInstruction: `${systemPrompt}\n\nContexto relevante:\n${contextText}`,
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        },
       });
 
       const chat = model.startChat({
         history: formattedHistory,
       });
 
-      const stream = await chat.sendMessageStream(userMessage);
+      const result = await chat.sendMessageStream(userMessage);
 
       setMessages((prev) => [...prev, { role: 'model', text: '' }]);
       setIsLoading(false);
 
       let fullText = '';
-      for await (const chunk of stream.stream) {
+      for await (const chunk of result.stream) {
         const delta = chunk.text();
         fullText += delta;
         setMessages((prev) => {
@@ -142,12 +180,17 @@ export default function Chatbot() {
         });
       }
     } catch (err) {
-      console.error(err);
-      setMessages((prev) => [...prev, { role: 'model', text: 'Error de conexión. Verificá tu API Key y tu conexión a internet.' }]);
+      console.error('Chatbot error:', err);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'model', text: 'Error de conexión. Intentá de nuevo en unos segundos.' },
+      ]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const remainingMessages = RATE_LIMIT.MAX_MESSAGES_PER_SESSION - messageCount;
 
   return (
     <>
@@ -219,20 +262,28 @@ export default function Chatbot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
+          {/* Rate limit indicator + Input */}
           <div className="px-4 pb-4 pt-2">
+            {messageCount > 0 && (
+              <div className="text-[10px] text-zinc-600 text-right mb-1.5">
+                {remainingMessages > 0
+                  ? `${remainingMessages} consulta${remainingMessages !== 1 ? 's' : ''} restante${remainingMessages !== 1 ? 's' : ''}`
+                  : 'Sin consultas restantes'}
+              </div>
+            )}
             <form onSubmit={handleSend} className="relative">
               <input
                 ref={inputRef}
                 type="text"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => setInput(e.target.value.slice(0, RATE_LIMIT.MAX_INPUT_LENGTH))}
                 placeholder="Preguntá algo..."
                 className="chat-input"
+                disabled={remainingMessages <= 0}
               />
               <button
                 type="submit"
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || !input.trim() || remainingMessages <= 0}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-zinc-600 hover:text-zinc-300 disabled:opacity-30 disabled:hover:text-zinc-600 transition-colors"
               >
                 <Send className="w-4 h-4" />
