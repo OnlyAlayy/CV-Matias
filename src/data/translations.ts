@@ -6,6 +6,7 @@ export const t = {
     navProjects: 'Proyectos',
     navExperience: 'Experiencia',
     navContact: 'Contacto',
+    navDownloadCV: 'Descargar CV',
 
     // Hero
     available: 'Disponible para proyectos',
@@ -131,6 +132,7 @@ export const t = {
     navProjects: 'Projects',
     navExperience: 'Experience',
     navContact: 'Contact',
+    navDownloadCV: 'Download CV',
 
     // Hero
     available: 'Available for projects',
