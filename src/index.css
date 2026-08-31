@@ -756,6 +756,22 @@ body {
     color: #000000 !important;
   }
 
+  /* Expand scrollable sections (like Certifications) for printing */
+  .overflow-y-auto, .overflow-hidden {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  
+  .h-\\[340px\\] {
+    height: auto !important;
+  }
+  
+  /* Remove gradient fades from scrollable sections */
+  .bg-gradient-to-b, .bg-gradient-to-t {
+    display: none !important;
+  }
+
   /* Profile Photo for Print */
   .profile-photo-wrap {
     border: none !important;
