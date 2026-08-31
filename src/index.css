@@ -735,7 +735,6 @@ body {
     margin-bottom: 10pt;
     border-bottom: 1px solid #e5e7eb !important;
     border-radius: 0 !important;
-    page-break-inside: avoid;
     display: block !important;
     height: auto !important;
   }
