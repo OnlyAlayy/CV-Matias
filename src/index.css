@@ -756,6 +756,19 @@ body {
     color: #000000 !important;
   }
 
+  /* Force all animated/hidden elements to be visible in print */
+  * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Prevent sections from taking full screen height */
+  .min-h-screen, .min-h-\\[100dvh\\] {
+    min-height: auto !important;
+  }
+
   /* Expand scrollable sections (like Certifications) for printing */
   .overflow-y-auto, .overflow-hidden {
     overflow: visible !important;

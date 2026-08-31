@@ -52,19 +52,28 @@ function Typewriter({ parts }: { parts: { text: string; className?: string }[] }
   let charsToRender = charIndex;
   return (
     <p className="text-base md:text-lg text-zinc-300 max-w-xl leading-relaxed mb-3 font-light min-h-[56px]">
-      {parts.map((p, i) => {
-        if (charsToRender <= 0 || !p.text) return null;
-        const currentText = p.text.slice(0, charsToRender);
-        charsToRender -= p.text.length;
-        return (
-          <span key={i} className={p.className}>
-            {currentText}
-          </span>
-        );
-      })}
-      {charIndex < parts.reduce((acc, p) => acc + (p.text?.length || 0), 0) && (
-        <span className="inline-block w-1.5 h-[1.1em] bg-zinc-400 ml-1 translate-y-[2px] animate-pulse" />
-      )}
+      {/* Screen version (Typing effect) */}
+      <span className="print:hidden">
+        {parts.map((p, i) => {
+          if (charsToRender <= 0 || !p.text) return null;
+          const currentText = p.text.slice(0, charsToRender);
+          charsToRender -= p.text.length;
+          return (
+            <span key={i} className={p.className}>
+              {currentText}
+            </span>
+          );
+        })}
+        {charIndex < parts.reduce((acc, p) => acc + (p.text?.length || 0), 0) && (
+          <span className="inline-block w-1.5 h-[1.1em] bg-zinc-400 ml-1 translate-y-[2px] animate-pulse" />
+        )}
+      </span>
+      {/* Print version (Full text instantly) */}
+      <span className="hidden print:inline">
+        {parts.map((p, i) => (
+          <span key={i} className={p.className}>{p.text}</span>
+        ))}
+      </span>
     </p>
   );
 }
