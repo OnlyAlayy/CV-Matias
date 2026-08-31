@@ -448,7 +448,7 @@ export default function App() {
                 <p className="text-sm text-zinc-300 leading-relaxed mb-4">{l.aboutP1}</p>
                 <p className="text-sm text-zinc-400 leading-relaxed">{l.aboutP2}</p>
               </div>
-              <div className="relative flex flex-col h-[340px]">
+              <div className="relative flex flex-col h-[340px] print:h-auto">
                 <div className="pb-4 flex-shrink-0">
                   <p className="section-tag">{l.certsLabel}</p>
                 </div>
