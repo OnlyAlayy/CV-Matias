@@ -352,7 +352,7 @@ export default function App() {
 
         {/* ── Hero ── */}
         <section className="min-h-[100dvh] flex flex-col pt-32 md:pt-20 pb-20 justify-center">
-          <div className="grid md:grid-cols-[1fr_auto] gap-12 items-center">
+          <div className="grid print:grid-cols-[1fr_auto] md:grid-cols-[1fr_auto] gap-12 items-center">
 
             {/* Left: Text */}
             <div>
@@ -437,7 +437,7 @@ export default function App() {
         {/* ── About ── */}
         <section id="about" className="py-20">
           <Reveal>
-            <div className="grid md:grid-cols-2 gap-8 items-start">
+            <div className="grid print:grid-cols-2 md:grid-cols-2 gap-8 items-start">
               <div className="about-card">
                 <p className="section-tag">{l.aboutLabel}</p>
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-100 mb-5 leading-tight">
