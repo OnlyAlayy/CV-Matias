@@ -765,8 +765,34 @@ body {
   }
 
   /* Prevent sections from taking full screen height */
-  .min-h-screen, .min-h-\\[100dvh\\] {
+  .min-h-screen, .min-h-\[100dvh\] {
     min-height: auto !important;
+  }
+
+  /* Stack grid layouts naturally to avoid huge empty heights */
+  .grid {
+    display: block !important;
+  }
+
+  /* Reduce paddings and margins for print */
+  .py-20 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+  
+  .pt-32, .md\\:pt-20, .pb-20, .pb-32 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .mb-12, .mb-6, .mb-4, .mt-4 {
+    margin-bottom: 1rem !important;
+    margin-top: 0 !important;
+  }
+  
+  /* Hide project image containers that leave blank spaces */
+  .img-placeholder, .h-32.rounded-lg.overflow-hidden {
+    display: none !important;
   }
 
   /* Expand scrollable sections (like Certifications) for printing */
