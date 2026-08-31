@@ -537,7 +537,7 @@ export default function App() {
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 print:block print:space-y-4">
             {l.projects.map((p, i) => (
               <Reveal key={p.name} className={p.span} delay={i * 0.08}>
                 <a href={p.href} target="_blank" rel="noopener noreferrer"
@@ -579,7 +579,7 @@ export default function App() {
           </div>
 
           <Reveal delay={0.2}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 print:block print:space-y-4">
               {l.secondaryProjects.map(p => (
                 <a key={p.name} href={p.href} target="_blank" rel="noopener noreferrer"
                   onMouseMove={handleMouseMove}

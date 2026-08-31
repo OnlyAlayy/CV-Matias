@@ -779,11 +779,6 @@ body {
     min-height: auto !important;
   }
 
-  /* Stack grid layouts naturally to avoid huge empty heights */
-  .grid {
-    display: block !important;
-  }
-
   /* Reduce paddings and margins for print */
   .py-20 {
     padding-top: 1rem !important;
