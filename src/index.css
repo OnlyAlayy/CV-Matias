@@ -705,7 +705,7 @@ body {
   }
   
   /* Hide unnecessary UI elements */
-  nav, .chat-trigger, .chat-panel, .fixed, .noise, .aurora-wrap, .img-placeholder, .marquee-track, button {
+  nav, .chat-trigger, .chat-panel, .fixed, .aurora-wrap, .img-placeholder, .marquee-track, button {
     display: none !important;
   }
   
