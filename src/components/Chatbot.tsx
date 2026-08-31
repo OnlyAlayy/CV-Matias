@@ -1,24 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { resumeChunks, systemPrompt } from '../data/chunks';
 import { Send, X, MessageSquare } from 'lucide-react';
-import Fuse from 'fuse.js';
 
-/* ===== Lexical Search Engine ===== */
-const fuse = new Fuse(resumeChunks, {
-  keys: ['content'],
-  includeScore: true,
-  threshold: 0.6,
-});
-
-/* ===== Rate Limiting ===== */
+/* ===== Rate Limiting (client-side, complementary) ===== */
 const RATE_LIMIT = {
   MAX_MESSAGES_PER_SESSION: 15,
   COOLDOWN_MS: 3000,
   MAX_INPUT_LENGTH: 300,
 };
 
-/* ===== Simple Markdown Renderer (sin dependencias externas) ===== */
+/* ===== Simple Markdown Renderer ===== */
 function renderText(text: string): React.ReactNode[] {
   return text.split('\n').map((line, li) => {
     const parts = line.split(/(\*\*.*?\*\*|`.*?`)/g);
@@ -67,16 +57,6 @@ export default function Chatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Instanciar el modelo una sola vez
-  const genAI = React.useMemo(() => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error('VITE_GEMINI_API_KEY no está definida en .env');
-      return null;
-    }
-    return new GoogleGenerativeAI(apiKey);
-  }, []);
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -99,7 +79,7 @@ export default function Chatbot() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    // --- Rate Limiting Checks ---
+    // --- Client-side Rate Limiting ---
     if (messageCount >= RATE_LIMIT.MAX_MESSAGES_PER_SESSION) {
       setMessages((prev) => [
         ...prev,
@@ -125,57 +105,79 @@ export default function Chatbot() {
     setLastSentAt(now);
 
     try {
-      if (!genAI) {
-        setMessages((prev) => [...prev, { role: 'model', text: 'Error: Cliente de IA no configurado.' }]);
+      // Build history (only user messages that came after the welcome)
+      const chatHistory = messages.slice(-4);
+      const firstUserIdx = chatHistory.findIndex((m) => m.role === 'user');
+      const validHistory = firstUserIdx >= 0 ? chatHistory.slice(firstUserIdx) : [];
+
+      // Call our secure backend API (API key stays server-side)
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          history: validHistory.map((m) => ({ role: m.role, text: m.text })),
+        }),
+      });
+
+      if (response.status === 429) {
+        setMessages((prev) => [
+          ...prev,
+          { role: 'model', text: 'Demasiadas consultas. Intentá de nuevo más tarde.' },
+        ]);
         setIsLoading(false);
         return;
       }
 
-      // RAG: Lexical Search
-      const searchResults = fuse.search(userMessage);
-      const topChunks = searchResults.slice(0, 3).map((r) => r.item.content);
-      const contextText =
-        topChunks.length > 0
-          ? topChunks.join('\n\n')
-          : 'No hay información específica. Sugerí contactar a Matías directamente.';
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
 
-      // Mapear historial de chat al formato de Gemini
-      // Gemini requiere que el primer mensaje del historial sea 'user'
-      const chatHistory = messages.slice(-4);
-      const firstUserIdx = chatHistory.findIndex((m) => m.role === 'user');
-      const validHistory = firstUserIdx >= 0 ? chatHistory.slice(firstUserIdx) : [];
-      const formattedHistory = validHistory.map((m) => ({
-        role: m.role === 'user' ? 'user' as const : 'model' as const,
-        parts: [{ text: m.text }],
-      }));
-
-      // Configurar modelo con contexto inyectado
-      const model = genAI.getGenerativeModel({
-        model: 'gemini-2.5-flash',
-        systemInstruction: `${systemPrompt}\n\nContexto relevante:\n${contextText}`,
-        generationConfig: {
-          temperature: 0.7,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        },
-      });
-
-      const chat = model.startChat({
-        history: formattedHistory,
-      });
-
-      const result = await chat.sendMessageStream(userMessage);
-
+      // Handle SSE streaming response
       setMessages((prev) => [...prev, { role: 'model', text: '' }]);
       setIsLoading(false);
 
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
       let fullText = '';
-      for await (const chunk of result.stream) {
-        const delta = chunk.text();
-        fullText += delta;
+
+      if (reader) {
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') break;
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.text) {
+                  fullText += parsed.text;
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = { role: 'model', text: fullText };
+                    return updated;
+                  });
+                }
+              } catch {
+                // Skip non-JSON lines
+              }
+            }
+          }
+        }
+      }
+
+      // If no streaming text was received, show error
+      if (!fullText) {
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1] = { role: 'model', text: fullText };
+          updated[updated.length - 1] = { role: 'model', text: 'No se recibió respuesta. Intentá de nuevo.' };
           return updated;
         });
       }
