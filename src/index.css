@@ -690,3 +690,90 @@ body {
   filter: contrast(1.1) brightness(0.9);
 }
 
+/* ───────────────── Print Styles for CV Download ───────────────── */
+@media print {
+  @page {
+    margin: 1.5cm;
+    size: A4 portrait;
+  }
+  
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.4;
+  }
+  
+  /* Hide unnecessary UI elements */
+  nav, .chat-trigger, .chat-panel, .fixed, .noise, .aurora-wrap, .img-placeholder, .marquee-track, button {
+    display: none !important;
+  }
+  
+  /* Convert layout for paper */
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  section {
+    padding: 10pt 0 !important;
+    min-height: auto !important;
+    page-break-inside: avoid;
+  }
+  
+  .gradient-text, h1, h2, h3, h4, h5 {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    background: none !important;
+  }
+  
+  .project-card, .exp-item {
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 10pt 0 !important;
+    margin-bottom: 10pt;
+    border-bottom: 1px solid #e5e7eb !important;
+    border-radius: 0 !important;
+  }
+  
+  .project-card::before, .project-card::after {
+    display: none !important;
+  }
+  
+  .tag, .skill-group-label {
+    background: none !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+  }
+
+  .text-zinc-400, .text-zinc-500, .text-zinc-600 {
+    color: #4b5563 !important;
+  }
+  
+  .text-zinc-100, .text-zinc-200, .text-zinc-300, .text-white {
+    color: #000000 !important;
+  }
+
+  /* Profile Photo for Print */
+  .profile-photo-wrap {
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    animation: none !important;
+    width: 120px !important;
+    height: 120px !important;
+    padding: 0 !important;
+  }
+  
+  .profile-photo-inner {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  a {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+  }
+}

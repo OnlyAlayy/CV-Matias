@@ -307,11 +307,11 @@ export default function App() {
               style={{ fontSize: '11px' }}>
               {l.navContact}
             </a>
-            <a href="/Profile.pdf" target="_blank" rel="noopener noreferrer"
-              className="hidden md:flex ml-2 mono-label text-zinc-900 bg-zinc-100 border border-transparent rounded-full px-4 py-1.5 hover:bg-white hover:scale-[1.02] active:scale-[0.98] transition-all font-medium"
+            <button onClick={() => window.print()}
+              className="hidden md:flex ml-2 mono-label text-zinc-900 bg-zinc-100 border border-transparent rounded-full px-4 py-1.5 hover:bg-white hover:scale-[1.02] active:scale-[0.98] transition-all font-medium cursor-pointer"
               style={{ fontSize: '11px' }}>
               {l.navDownloadCV}
-            </a>
+            </button>
             <button 
               className="md:hidden p-2 text-zinc-400 hover:text-zinc-200 transition-colors ml-1"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -327,7 +327,7 @@ export default function App() {
               <a href="#projects" onClick={() => setIsMenuOpen(false)} className="text-sm font-medium text-zinc-300 hover:text-white uppercase tracking-widest">{l.navProjects}</a>
               <a href="#experience" onClick={() => setIsMenuOpen(false)} className="text-sm font-medium text-zinc-300 hover:text-white uppercase tracking-widest">{l.navExperience}</a>
               <a href="#contact" onClick={() => setIsMenuOpen(false)} className="text-sm font-medium text-zinc-300 hover:text-white uppercase tracking-widest">{l.navContact}</a>
-              <a href="/Profile.pdf" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-zinc-900 bg-zinc-100 hover:bg-white text-center py-2 rounded-md uppercase tracking-widest mt-2">{l.navDownloadCV}</a>
+              <button onClick={() => { setIsMenuOpen(false); setTimeout(() => window.print(), 300); }} className="text-sm font-medium text-zinc-900 bg-zinc-100 hover:bg-white text-center py-2 rounded-md uppercase tracking-widest mt-2 cursor-pointer">{l.navDownloadCV}</button>
               <div className="flex items-center gap-4 pt-4 border-t border-white/5">
                 <a href="https://github.com/OnlyAlayy" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-200"><GithubIcon className="w-5 h-5" /></a>
                 <a href="https://www.linkedin.com/in/matias-ojeda-ferreyra" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-200"><LinkedinIcon className="w-5 h-5" /></a>
